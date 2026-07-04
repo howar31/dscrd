@@ -37,6 +37,9 @@ dscrd operates as a **Discord bot** — the only automation model Discord's Term
 # npm (downloads the platform binary, verifies SHA256)
 npm install -g @howar31/dscrd
 
+# or Homebrew
+brew install howar31/tap/dscrd
+
 # or Go
 go install github.com/howar31/dscrd/cmd/dscrd@latest
 
