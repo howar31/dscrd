@@ -1,6 +1,6 @@
 # dscrd — Agent-facing Discord CLI 設計文件
 
-> 狀態：已實作完成（2026-07-03），待使用者實測與首次 commit。全部六個 Phase 完成；每個 leaf 指令都有測試（meta-test 強制），發佈管線（CI / goreleaser / npm wrapper）就緒。
+> 狀態：已上線（v0.1.1，2026-07-04）。發布通路：GitHub Releases、npm `@howar31/dscrd`、Homebrew（`brew install howar31/tap/dscrd`）、`go install`。本文件為原始設計規格；現行架構的權威文件是 SPEC.md。
 
 ## 1. 定位
 
