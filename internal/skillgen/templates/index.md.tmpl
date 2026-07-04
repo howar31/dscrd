@@ -13,6 +13,10 @@ metadata:
       - kind: node
         package: "@howar31/dscrd"
         bins: [dscrd]
+      - kind: brew
+        tap: howar31/homebrew-tap
+        formula: dscrd
+        bins: [dscrd]
       - kind: go
         module: github.com/howar31/dscrd/cmd/dscrd
         bins: [dscrd]
