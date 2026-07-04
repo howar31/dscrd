@@ -1,5 +1,24 @@
 # dscrd
 
+<!-- Status -->
+[![CI](https://img.shields.io/github/actions/workflow/status/howar31/dscrd/ci.yml?branch=main&label=CI)](https://github.com/howar31/dscrd/actions/workflows/ci.yml)
+[![Go 1.25+](https://img.shields.io/badge/go-1.25+-00ADD8.svg)](https://go.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Conventional Commits](https://img.shields.io/badge/conventional%20commits-1.0.0-yellow)](https://www.conventionalcommits.org)
+[![Dependabot](https://img.shields.io/badge/dependabot-enabled-025E8C?logo=dependabot)](.github/dependabot.yml)
+
+<!-- Release & distribution -->
+[![GitHub release](https://img.shields.io/github/v/release/howar31/dscrd)](https://github.com/howar31/dscrd/releases)
+[![GitHub release downloads](https://img.shields.io/github/downloads/howar31/dscrd/total?label=release%20downloads)](https://github.com/howar31/dscrd/releases)
+[![npm version](https://img.shields.io/npm/v/@howar31/dscrd)](https://www.npmjs.com/package/@howar31/dscrd)
+[![npm downloads](https://img.shields.io/npm/dm/@howar31/dscrd?label=npm%20downloads)](https://www.npmjs.com/package/@howar31/dscrd)
+
+<!-- Activity & community -->
+[![Last commit](https://img.shields.io/github/last-commit/howar31/dscrd)](https://github.com/howar31/dscrd/commits/main)
+[![Open issues](https://img.shields.io/github/issues/howar31/dscrd)](https://github.com/howar31/dscrd/issues)
+[![Stars](https://img.shields.io/github/stars/howar31/dscrd)](https://github.com/howar31/dscrd/stargazers)
+[![Sponsor on Ko-fi](https://img.shields.io/badge/sponsor-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/howar31)
+
 **Agent-facing Discord CLI.** One command = one REST call, token-efficient output, no gateway connection, no daemon. Built for AI coding agents (and humans who live in the terminal) to read and operate Discord servers through a bot.
 
 ```console
