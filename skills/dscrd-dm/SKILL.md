@@ -2,7 +2,7 @@
 name: dscrd-dm
 description: "Direct messages (sent as the bot; requires a mutual server)"
 metadata:
-  version: 0.1.0
+  version: 0.1.1
   openclaw:
     category: "productivity"
     requires:
