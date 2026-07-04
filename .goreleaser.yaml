@@ -1,0 +1,22 @@
+version: 2
+project_name: dscrd
+builds:
+  - main: ./cmd/dscrd
+    binary: dscrd
+    env: [CGO_ENABLED=0]
+    goos: [darwin, linux]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+archives:
+  - formats: [tar.gz]
+    name_template: 'dscrd_{{ .Os }}_{{ .Arch }}'
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+changelog:
+  use: github-native
+release:
+  prerelease: auto

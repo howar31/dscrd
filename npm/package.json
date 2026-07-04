@@ -1,0 +1,53 @@
+{
+  "name": "@howar31/dscrd",
+  "description": "Agent-facing Discord CLI for AI agents.",
+  "version": "0.0.0",
+  "license": "MIT",
+  "author": "Howar31",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/howar31/dscrd.git"
+  },
+  "homepage": "https://github.com/howar31/dscrd",
+  "bugs": {
+    "url": "https://github.com/howar31/dscrd/issues"
+  },
+  "bin": {
+    "dscrd": "run.js"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "preferUnplugged": true,
+  "keywords": [
+    "cli",
+    "discord",
+    "agent",
+    "ai-agent",
+    "automation"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "supportedPlatforms": {
+    "darwin-arm64": {
+      "artifact": "dscrd_darwin_arm64.tar.gz",
+      "binary": "dscrd"
+    },
+    "darwin-x64": {
+      "artifact": "dscrd_darwin_amd64.tar.gz",
+      "binary": "dscrd"
+    },
+    "linux-arm64": {
+      "artifact": "dscrd_linux_arm64.tar.gz",
+      "binary": "dscrd"
+    },
+    "linux-x64": {
+      "artifact": "dscrd_linux_amd64.tar.gz",
+      "binary": "dscrd"
+    }
+  }
+}
