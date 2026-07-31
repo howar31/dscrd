@@ -224,3 +224,16 @@ func TestActiveProfile(t *testing.T) {
 		t.Fatal("no active profile must report !ok")
 	}
 }
+
+func TestValidateProfileName(t *testing.T) {
+	for _, name := range []string{"default", "Alice", "bot-1", "bot_1", "A"} {
+		if err := ValidateProfileName(name); err != nil {
+			t.Errorf("ValidateProfileName(%q) = %v, want nil", name, err)
+		}
+	}
+	for _, name := range []string{"", "bad name", "with.dot", "quote\"d", "café", "a/b"} {
+		if err := ValidateProfileName(name); err == nil {
+			t.Errorf("ValidateProfileName(%q) = nil, want error", name)
+		}
+	}
+}

@@ -114,6 +114,186 @@ func TestAuthSwitchAndLogout(t *testing.T) {
 	}
 }
 
+// authEnv isolates a config file and points the API base at srv (or at a dead
+// address when srv is nil) so `auth status` never reaches the real API.
+func authEnv(t *testing.T, srv *httptest.Server) string {
+	t.Helper()
+	cfgPath := t.TempDir() + "/config.toml"
+	t.Setenv("DSCRD_CONFIG", cfgPath)
+	t.Setenv("DSCRD_KEYRING_BACKEND", "file")
+	t.Setenv("DSCRD_PROFILE", "")
+	t.Setenv("DSCRD_TOKEN", "")
+	if srv != nil {
+		t.Setenv("DSCRD_API_BASE", srv.URL)
+	} else {
+		t.Setenv("DSCRD_API_BASE", "http://127.0.0.1:0")
+	}
+	return cfgPath
+}
+
+func TestAuthRename(t *testing.T) {
+	srv := meServer(t)
+	defer srv.Close()
+	authEnv(t, srv)
+
+	for _, name := range []string{"one", "two"} {
+		if out, err := runCmdSharedEnv(t, "auth", "set-token", "--token", "tok-"+name, "--name", name); err != nil {
+			t.Fatalf("set-token %s: %v (%s)", name, err, out)
+		}
+	}
+	if out, err := runCmdSharedEnv(t, "auth", "switch", "two"); err != nil {
+		t.Fatalf("switch: %v (%s)", err, out)
+	}
+
+	// Renaming the active profile carries `active` with it.
+	out, err := runCmdSharedEnv(t, "auth", "rename", "two", "two-new")
+	if err != nil || !strings.Contains(out, `renamed profile "two" -> "two-new" (active: two-new)`) {
+		t.Fatalf("rename active: %v (%s)", err, out)
+	}
+	// The stored token survives the rename and still resolves.
+	if out, err := runCmdSharedEnv(t, "auth", "test", "--profile", "two-new"); err != nil {
+		t.Fatalf("auth test after rename: %v (%s)", err, out)
+	}
+
+	// Renaming a non-active profile leaves `active` alone.
+	out, err = runCmdSharedEnv(t, "auth", "rename", "one", "one-new")
+	if err != nil || !strings.Contains(out, "(active: two-new)") {
+		t.Fatalf("rename non-active: %v (%s)", err, out)
+	}
+
+	for _, tc := range []struct {
+		name string
+		args []string
+	}{
+		{"missing source", []string{"auth", "rename", "nope", "whatever"}},
+		{"same name", []string{"auth", "rename", "one-new", "one-new"}},
+		{"target taken", []string{"auth", "rename", "one-new", "two-new"}},
+		{"invalid name", []string{"auth", "rename", "one-new", "bad name"}},
+	} {
+		if out, err := runCmdSharedEnv(t, tc.args...); err == nil {
+			t.Errorf("%s must error, got %q", tc.name, out)
+		}
+	}
+
+	// --force overwrites the target.
+	out, err = runCmdSharedEnv(t, "auth", "rename", "one-new", "two-new", "--force")
+	if err != nil || !strings.Contains(out, `renamed profile "one-new" -> "two-new"`) {
+		t.Fatalf("rename --force: %v (%s)", err, out)
+	}
+	out, err = runCmdSharedEnv(t, "auth", "status")
+	if err != nil {
+		t.Fatalf("status: %v (%s)", err, out)
+	}
+	if strings.Contains(out, "one-new") {
+		t.Errorf("source profile still present after rename: %q", out)
+	}
+}
+
+func TestAuthSetTokenOverwriteProtection(t *testing.T) {
+	authEnv(t, nil)
+
+	if out, err := runCmdSharedEnv(t, "auth", "set-token", "--token", "tok", "--name", "one"); err != nil {
+		t.Fatalf("set-token: %v (%s)", err, out)
+	}
+	if out, err := runCmdSharedEnv(t, "auth", "set-token", "--token", "other", "--name", "one"); err == nil {
+		t.Fatalf("overwriting an existing profile must error, got %q", out)
+	}
+	if out, err := runCmdSharedEnv(t, "auth", "set-token", "--token", "other", "--name", "one", "--force"); err != nil {
+		t.Fatalf("set-token --force: %v (%s)", err, out)
+	}
+	if out, err := runCmdSharedEnv(t, "auth", "set-token", "--token", "tok", "--name", "bad name"); err == nil {
+		t.Fatalf("invalid profile name must error, got %q", out)
+	}
+}
+
+func TestAuthSetTokenDefaultNameHint(t *testing.T) {
+	authEnv(t, nil)
+
+	// The first profile carries no hint: there is nothing to disambiguate yet.
+	out, err := runCmdSharedEnv(t, "auth", "set-token", "--token", "tok", "--name", "one")
+	if err != nil {
+		t.Fatalf("set-token: %v (%s)", err, out)
+	}
+	if strings.Contains(out, "note: saved as") {
+		t.Errorf("named profile must not be hinted: %q", out)
+	}
+
+	// Falling back to "default" while other profiles exist warns.
+	out, err = runCmdSharedEnv(t, "auth", "set-token", "--token", "tok2")
+	if err != nil {
+		t.Fatalf("set-token default: %v (%s)", err, out)
+	}
+	if !strings.Contains(out, `note: saved as "default"`) {
+		t.Errorf("unnamed profile must be hinted: %q", out)
+	}
+}
+
+func TestAuthWriteCommandsHonorDryRun(t *testing.T) {
+	cfgPath := authEnv(t, nil)
+
+	// set-token --dry-run writes nothing and needs no token.
+	out, err := runCmdSharedEnv(t, "auth", "set-token", "--name", "one", "--dry-run")
+	if err != nil || !strings.Contains(out, `[dry-run] would save profile "one" (new)`) {
+		t.Fatalf("set-token --dry-run: %v (%s)", err, out)
+	}
+	if _, err := os.Stat(cfgPath); !os.IsNotExist(err) {
+		t.Fatalf("set-token --dry-run wrote the config file")
+	}
+
+	for _, name := range []string{"one", "two"} {
+		if out, err := runCmdSharedEnv(t, "auth", "set-token", "--token", "tok-"+name, "--name", name); err != nil {
+			t.Fatalf("set-token %s: %v (%s)", name, err, out)
+		}
+	}
+	before, err := os.ReadFile(cfgPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, tc := range []struct {
+		name string
+		args []string
+		want string
+	}{
+		{"switch", []string{"auth", "switch", "two", "--dry-run"}, `[dry-run] would set active profile to "two"`},
+		{"logout", []string{"auth", "logout", "--name", "two", "--dry-run"}, `[dry-run] would remove profile "two"`},
+		{"logout active", []string{"auth", "logout", "--dry-run"}, "active would become unset"},
+		{"rename", []string{"auth", "rename", "two", "two-new", "--dry-run"}, `would rename profile "two" -> "two-new" (active unchanged)`},
+		{"rename active", []string{"auth", "rename", "one", "one-new", "--dry-run"}, "active follows the rename"},
+	} {
+		out, err := runCmdSharedEnv(t, tc.args...)
+		if err != nil || !strings.Contains(out, tc.want) {
+			t.Errorf("%s --dry-run: %v (%s), want %q", tc.name, err, out, tc.want)
+		}
+	}
+
+	after, err := os.ReadFile(cfgPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(before) != string(after) {
+		t.Fatal("a --dry-run command mutated the config file")
+	}
+}
+
+func TestAuthStatusIsSorted(t *testing.T) {
+	authEnv(t, nil)
+
+	for _, name := range []string{"zeta", "alpha", "mid"} {
+		if out, err := runCmdSharedEnv(t, "auth", "set-token", "--token", "tok", "--name", name); err != nil {
+			t.Fatalf("set-token %s: %v (%s)", name, err, out)
+		}
+	}
+	out, err := runCmdSharedEnv(t, "auth", "status")
+	if err != nil {
+		t.Fatalf("status: %v (%s)", err, out)
+	}
+	alpha, mid, zeta := strings.Index(out, "alpha"), strings.Index(out, "mid"), strings.Index(out, "zeta")
+	if alpha < 0 || mid < 0 || zeta < 0 || !(alpha < mid && mid < zeta) {
+		t.Fatalf("status not sorted by name: %q", out)
+	}
+}
+
 func TestAuthSetTokenRequiresTokenWithoutTTY(t *testing.T) {
 	if _, err := runCmd(t, nil, "auth", "set-token"); err == nil {
 		t.Fatal("set-token without --token and without TTY must error")

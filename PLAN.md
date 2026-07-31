@@ -27,11 +27,13 @@
   - `file` — 金鑰存 `~/.config/dscrd/.encryption_key`（mode 0600）。
 - **Token 解析優先序**（高到低）：`DSCRD_TOKEN` env → `--profile <name>` flag → `DSCRD_PROFILE` env → config 內 active profile。
 - **Profile 欄位**：token（加密）、application_id（產 invite URL 用）、default_guild（選填）。
+- **Profile 名稱**：寫入時限 `[A-Za-z0-9_-]+`（載入不驗，舊 config 不受影響）。`set-token` 對已存在的 profile 需 `--force`，因為 token 存後讀不回來、誤蓋無法復原。
 - **子指令**：
   - `auth set-token` — 貼上 token（隱藏輸入）。
   - `auth status` — 列出 profiles、對 Discord 驗證 active token（`GET /users/@me`）。
   - `auth test` — 明確的 live token 檢查。
   - `auth switch <name>` / `auth logout` — 切換 / 移除 profile。
+  - `auth rename <old> <new> [--force]` — 改名 profile;若改的是 active,`active` 一併跟著改。
   - `auth invite-url [--permissions <bits|preset>]` — 產生把 bot 邀進伺服器的 OAuth2 連結。
 - **保證**：token 絕不印出、不落 log；client 端任何錯誤訊息都不得含 token。
 

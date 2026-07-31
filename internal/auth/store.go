@@ -3,12 +3,30 @@ package auth
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/BurntSushi/toml"
 )
+
+// profileNamePattern is the allowed shape of a profile name. It keeps names
+// usable as bare TOML keys and unambiguous as command arguments.
+var profileNamePattern = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
+
+// ValidateProfileName rejects names that would need quoting as a TOML key.
+// It is enforced on write only, so configs written before this rule still load.
+func ValidateProfileName(name string) error {
+	if name == "" {
+		return fmt.Errorf("empty profile name")
+	}
+	if !profileNamePattern.MatchString(name) {
+		return fmt.Errorf("invalid profile name %q: use letters, digits, '-' or '_'", name)
+	}
+	return nil
+}
 
 // Profile holds the credential and defaults for one Discord bot. The token is
 // stored encrypted at rest (see crypto.go); it is plaintext in memory after

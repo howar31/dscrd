@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 
 	"github.com/howar31/dscrd/internal/auth"
@@ -36,6 +37,7 @@ func newAuthCommand(g *GlobalFlags) *cobra.Command {
 		newAuthStatusCommand(g),
 		newAuthTestCommand(g),
 		newAuthSwitchCommand(g),
+		newAuthRenameCommand(g),
 		newAuthLogoutCommand(g),
 		newAuthInviteURLCommand(g),
 	)
@@ -44,6 +46,7 @@ func newAuthCommand(g *GlobalFlags) *cobra.Command {
 
 func newAuthSetTokenCommand(g *GlobalFlags) *cobra.Command {
 	var token, name, appID, defaultGuild string
+	var force bool
 	cmd := &cobra.Command{
 		Use:   "set-token",
 		Short: "Store a bot token (prompted securely when --token is omitted)",
@@ -51,6 +54,32 @@ func newAuthSetTokenCommand(g *GlobalFlags) *cobra.Command {
 			"write": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := auth.ValidateProfileName(name); err != nil {
+				return err
+			}
+			path, err := auth.ConfigPath()
+			if err != nil {
+				return err
+			}
+			cfg, err := auth.Load(path)
+			if err != nil {
+				return err
+			}
+			// Overwriting is opt-in: a stored token cannot be read back, so a
+			// mistyped --name would destroy another bot's credential silently.
+			_, exists := cfg.Profiles[name]
+			if exists && !force {
+				return fmt.Errorf("profile %q already exists; pass --force to overwrite its token", name)
+			}
+			// Preview before the prompt so --dry-run needs no credential.
+			if g.DryRun {
+				state := "new"
+				if exists {
+					state = "overwrite existing"
+				}
+				dryRunLocal(cmd, "would save profile %q (%s)", name, state)
+				return nil
+			}
 			if token == "" {
 				if !term.IsTerminal(int(os.Stdin.Fd())) {
 					return fmt.Errorf("no TTY for secure prompt; pass --token")
@@ -65,14 +94,6 @@ func newAuthSetTokenCommand(g *GlobalFlags) *cobra.Command {
 			}
 			if token == "" {
 				return fmt.Errorf("empty token")
-			}
-			path, err := auth.ConfigPath()
-			if err != nil {
-				return err
-			}
-			cfg, err := auth.Load(path)
-			if err != nil {
-				return err
 			}
 			p := cfg.Profiles[name]
 			p.Token = token
@@ -90,6 +111,11 @@ func newAuthSetTokenCommand(g *GlobalFlags) *cobra.Command {
 				return err
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "profile %q saved (active: %s)\n", name, cfg.Active)
+			// Managing several bots under the default label is a known trap.
+			if !cmd.Flags().Changed("name") && len(cfg.Profiles) > 1 {
+				fmt.Fprintf(cmd.OutOrStdout(),
+					"note: saved as %q; pass --name <label> next time ('dscrd auth rename' can fix it)\n", name)
+			}
 			return nil
 		},
 	}
@@ -97,6 +123,71 @@ func newAuthSetTokenCommand(g *GlobalFlags) *cobra.Command {
 	cmd.Flags().StringVar(&name, "name", "default", "profile name")
 	cmd.Flags().StringVar(&appID, "application-id", "", "application ID (for invite-url)")
 	cmd.Flags().StringVar(&defaultGuild, "default-guild", "", "default guild ID or name")
+	cmd.Flags().BoolVar(&force, "force", false, "overwrite the profile if it already exists")
+	return cmd
+}
+
+func newAuthRenameCommand(g *GlobalFlags) *cobra.Command {
+	var force bool
+	cmd := &cobra.Command{
+		Use:   "rename <old> <new>",
+		Short: "Rename a stored profile",
+		Args:  cobra.ExactArgs(2),
+		Annotations: map[string]string{
+			"write": "true",
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			oldName, newName := args[0], args[1]
+			if oldName == newName {
+				return fmt.Errorf("old and new profile names are the same")
+			}
+			if err := auth.ValidateProfileName(newName); err != nil {
+				return err
+			}
+			path, err := auth.ConfigPath()
+			if err != nil {
+				return err
+			}
+			cfg, err := auth.Load(path)
+			if err != nil {
+				return err
+			}
+			// The token travels as-is: Load leaves it encrypted when the key is
+			// unavailable and Save re-encrypts only plaintext, so renaming works
+			// with a locked keyring and never rewrites the ciphertext.
+			p, ok := cfg.Profiles[oldName]
+			if !ok {
+				return fmt.Errorf("profile %q not found", oldName)
+			}
+			if _, taken := cfg.Profiles[newName]; taken && !force {
+				return fmt.Errorf("profile %q already exists; pass --force to overwrite it", newName)
+			}
+			renamingActive := cfg.Active == oldName
+			if g.DryRun {
+				note := "unchanged"
+				if renamingActive {
+					note = "follows the rename"
+				}
+				dryRunLocal(cmd, "would rename profile %q -> %q (active %s)", oldName, newName, note)
+				return nil
+			}
+			delete(cfg.Profiles, oldName)
+			cfg.Profiles[newName] = p
+			if renamingActive {
+				cfg.Active = newName
+			}
+			if err := auth.Save(path, cfg); err != nil {
+				return err
+			}
+			active := cfg.Active
+			if active == "" {
+				active = "none"
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "renamed profile %q -> %q (active: %s)\n", oldName, newName, active)
+			return nil
+		},
+	}
+	cmd.Flags().BoolVar(&force, "force", false, "overwrite the target profile if it already exists")
 	return cmd
 }
 
@@ -154,6 +245,8 @@ func newAuthStatusCommand(g *GlobalFlags) *cobra.Command {
 				fmt.Fprintln(cmd.OutOrStdout(), "no profiles; run 'dscrd auth set-token'")
 				return nil
 			}
+			// Map iteration is unordered; sort so the listing is stable.
+			sort.Slice(items, func(i, j int) bool { return items[i].Name < items[j].Name })
 			if err := emit(cmd, g, items); err != nil {
 				return err
 			}
@@ -229,6 +322,10 @@ func newAuthSwitchCommand(g *GlobalFlags) *cobra.Command {
 			if _, ok := cfg.Profiles[args[0]]; !ok {
 				return fmt.Errorf("profile %q not found", args[0])
 			}
+			if g.DryRun {
+				dryRunLocal(cmd, "would set active profile to %q", args[0])
+				return nil
+			}
 			cfg.Active = args[0]
 			if err := auth.Save(path, cfg); err != nil {
 				return err
@@ -265,6 +362,14 @@ func newAuthLogoutCommand(g *GlobalFlags) *cobra.Command {
 			}
 			if _, ok := cfg.Profiles[target]; !ok {
 				return fmt.Errorf("profile %q not found", target)
+			}
+			if g.DryRun {
+				if cfg.Active == target {
+					dryRunLocal(cmd, "would remove profile %q (active would become unset)", target)
+				} else {
+					dryRunLocal(cmd, "would remove profile %q", target)
+				}
+				return nil
 			}
 			delete(cfg.Profiles, target)
 			if cfg.Active == target {

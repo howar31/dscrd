@@ -71,11 +71,16 @@ go install github.com/howar31/dscrd/cmd/dscrd@latest
 2. Under **Bot**: copy the **Token**, and enable the Privileged Gateway Intents you need:
    - **MESSAGE CONTENT INTENT** — required to read message text and search.
    - **SERVER MEMBERS INTENT** — required for `member list`.
-3. Store the credentials (the token is encrypted at rest):
+3. Store the credentials (the token is encrypted at rest). `--name` labels the
+   profile — pick something you will recognise later, because it is how you
+   select this bot:
 
    ```bash
-   dscrd auth set-token --token <bot-token> --application-id <application-id>
+   dscrd auth set-token --name <label> --token <bot-token> --application-id <application-id>
    ```
+
+   Omitting `--name` stores the profile as `default`, which gets confusing the
+   moment you add a second bot. Already did? `dscrd auth rename default <label>`.
 
 4. Invite the bot to your server (requires Manage Server on that server):
 
@@ -92,11 +97,36 @@ go install github.com/howar31/dscrd/cmd/dscrd@latest
    dscrd guild list
    ```
 
-Set a default server so you can skip `--guild` on every call:
+Set a default server so you can skip `--guild` on every call — easiest to pass
+it during step 3, alongside the token:
 
 ```bash
-dscrd auth set-token --token <bot-token> --default-guild <guild-id>
+dscrd auth set-token --name <label> --token <bot-token> --default-guild <guild-id>
 ```
+
+Updating a profile that already exists needs `--force`, which confirms you mean
+to replace its stored token:
+
+```bash
+dscrd auth set-token --name <label> --token <bot-token> --default-guild <guild-id> --force
+```
+
+### Multiple bots
+
+Each bot is a named profile. Tokens cannot be read back, so `set-token` refuses
+to overwrite an existing profile unless you pass `--force`.
+
+```bash
+dscrd auth status                     # list profiles; * marks the active one
+dscrd auth switch <label>             # change the active profile
+dscrd auth rename <old> <new>         # relabel a profile (active follows it)
+dscrd auth logout --name <label>      # remove one
+
+dscrd --profile <label> msg read --channel "#general"   # one-off, no switch
+```
+
+Profile names take letters, digits, `-` and `_`. Every write command above
+accepts `--dry-run` to preview without touching the config.
 
 ## Command tour
 
