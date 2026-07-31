@@ -21,6 +21,7 @@ Manage bot credentials
 |---------|-------------|
 | `dscrd auth invite-url` | Generate the OAuth2 URL that invites the bot to a server |
 | `dscrd auth logout` | Remove a stored profile |
+| `dscrd auth rename` | Rename a stored profile |
 | `dscrd auth set-token` | Store a bot token (prompted securely when --token is omitted) |
 | `dscrd auth status` | List profiles and verify the active token |
 | `dscrd auth switch` | Switch the active profile |
@@ -53,6 +54,21 @@ dscrd auth logout [flags]
 > [!CAUTION]
 > Write command — confirm with the user before executing; preview with `--dry-run`.
 
+## dscrd auth rename
+
+Rename a stored profile
+
+```bash
+dscrd auth rename <old> <new> [flags]
+```
+
+| Flag | Required | Default | Description |
+|------|----------|---------|-------------|
+| `--force` | — | — | overwrite the target profile if it already exists |
+
+> [!CAUTION]
+> Write command — confirm with the user before executing; preview with `--dry-run`.
+
 ## dscrd auth set-token
 
 Store a bot token (prompted securely when --token is omitted)
@@ -65,6 +81,7 @@ dscrd auth set-token [flags]
 |------|----------|---------|-------------|
 | `--application-id` | — | — | application ID (for invite-url) |
 | `--default-guild` | — | — | default guild ID or name |
+| `--force` | — | — | overwrite the profile if it already exists |
 | `--name` | — | `default` | profile name |
 | `--token` | — | — | bot token (omit to be prompted) |
 

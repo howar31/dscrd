@@ -210,6 +210,13 @@ func newResolver(g *GlobalFlags, c *api.Client) *resolve.Resolver {
 	return resolve.New(filepath.Join(cacheDir(), "resolve.json"), apiLookup{client: c})
 }
 
+// dryRunLocal renders a pending local mutation for --dry-run. Commands that
+// only touch the config file have no method/path to show, so they cannot use
+// dryRunPrint.
+func dryRunLocal(cmd *cobra.Command, format string, args ...any) {
+	fmt.Fprintf(cmd.OutOrStdout(), "[dry-run] "+format+"\n", args...)
+}
+
 // dryRunPrint renders the about-to-fire call for --dry-run.
 func dryRunPrint(cmd *cobra.Command, method, path string, body any) {
 	if body == nil {

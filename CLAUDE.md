@@ -22,7 +22,7 @@ goreleaser release --snapshot --clean       # local dry-run only
 - Code comments + test names: English. Docs: SPEC.md / CLAUDE.md in English; PLAN.md in zh-TW; README.md is human-facing.
 - One file per command group under `internal/commands/`, paired `_test.go`; every leaf command must be exercised via `runCmd`/`markCovered` — `zz_coverage_test.go` fails otherwise.
 - Command annotations drive skills and behavior: `discordEndpoint`, `write` ("true" → CAUTION + `--dry-run` support), `perms`, `intents`.
-- Write verbs MUST honor `--raw` and `--dry-run`; with a snowflake target, `--dry-run` must work without credentials (`clientAndChannel` / `clientAndGuild`).
+- API-backed write verbs MUST honor `--raw` and `--dry-run`; with a snowflake target, `--dry-run` must work without credentials (`clientAndChannel` / `clientAndGuild`). Local-only write verbs (the `auth` group) have no API response, so they honor `--dry-run` only, via `dryRunLocal`.
 - Response parsing uses compact item types implementing `Concise()`; tests run against `httptest` servers via the `DSCRD_API_BASE` override.
 - Test fixtures use scrubbed identifiers: `Alice` / `Bob`, snowflakes like `111111111111111111` (guild) / `222…2` (channel) / `333…3` (message) / `444…4` (user) / `555…5` (role). Never commit real names, tokens, or real IDs.
 - Exit codes: `0` ok · `3` auth · `4` not found · `5` rate-limited · `1` other. Mappings in `internal/api/errors.go`.
