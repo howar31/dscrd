@@ -2,7 +2,7 @@
 name: dscrd-audit-log
 description: "Read the server audit log"
 metadata:
-  version: 0.1.1
+  version: 0.2.0
   openclaw:
     category: "productivity"
     requires:
