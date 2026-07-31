@@ -2,7 +2,7 @@
 name: dscrd
 description: "dscrd CLI: read/send Discord messages, search, manage channels, threads, and roles from the terminal with token-efficient output."
 metadata:
-  version: 0.1.1
+  version: 0.2.0
   openclaw:
     category: "productivity"
     requires:

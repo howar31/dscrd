@@ -2,7 +2,7 @@
 name: dscrd-thread
 description: "Work with threads and forum posts"
 metadata:
-  version: 0.1.1
+  version: 0.2.0
   openclaw:
     category: "productivity"
     requires:

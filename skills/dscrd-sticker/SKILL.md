@@ -2,7 +2,7 @@
 name: dscrd-sticker
 description: "Inspect the server's stickers"
 metadata:
-  version: 0.1.1
+  version: 0.2.0
   openclaw:
     category: "productivity"
     requires:
