@@ -17,7 +17,7 @@
 [![Last commit](https://img.shields.io/github/last-commit/howar31/dscrd)](https://github.com/howar31/dscrd/commits/main)
 [![Open issues](https://img.shields.io/github/issues/howar31/dscrd)](https://github.com/howar31/dscrd/issues)
 [![Stars](https://img.shields.io/github/stars/howar31/dscrd)](https://github.com/howar31/dscrd/stargazers)
-[![Sponsor on Ko-fi](https://img.shields.io/badge/sponsor-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/howar31)
+[![Sponsor](https://img.shields.io/badge/Sponsor-donate.howar31.com-b4532c?logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTIwLjg0IDQuNjFhNS41IDUuNSAwIDAgMC03Ljc4IDBMMTIgNS42N2wtMS4wNi0xLjA2YTUuNSA1LjUgMCAwIDAtNy43OCA3Ljc4bDEuMDYgMS4wNkwxMiAyMS4yM2w3Ljc4LTcuNzggMS4wNi0xLjA2YTUuNSA1LjUgMCAwIDAgMC03Ljc4eiIvPjwvc3ZnPg==)](https://donate.howar31.com/)
 
 **Agent-facing Discord CLI.** One command = one REST call, token-efficient output, no gateway connection, no daemon. Built for AI coding agents (and humans who live in the terminal) to read and operate Discord servers through a bot.
 
