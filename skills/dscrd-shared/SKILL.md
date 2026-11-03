@@ -2,7 +2,7 @@
 name: dscrd-shared
 description: "dscrd CLI: shared reference for authentication, global flags, and security rules."
 metadata:
-  version: 0.2.0
+  version: 0.2.1
   openclaw:
     category: "productivity"
     requires:

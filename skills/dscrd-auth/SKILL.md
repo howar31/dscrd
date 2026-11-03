@@ -2,7 +2,7 @@
 name: dscrd-auth
 description: "Manage bot credentials"
 metadata:
-  version: 0.2.0
+  version: 0.2.1
   openclaw:
     category: "productivity"
     requires:
