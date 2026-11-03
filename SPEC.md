@@ -45,7 +45,7 @@ skills/                  # GENERATED agent skills (dscrd, dscrd-shared, dscrd-<g
 npm/                     # npm wrapper (@howar31/dscrd): postinstall binary download + SHA256 verify
 scripts/smoke.sh         # live end-to-end test against a real server (env-gated)
 .github/workflows/       # ci.yml (fmt/vet/test/goreleaser check + skills drift), release.yml
-.goreleaser.yaml         # darwin/linux × amd64/arm64 archives + checksums
+.goreleaser.yaml         # darwin/linux × amd64/arm64 archives + checksums + Homebrew cask
 VERSION / version.go     # version SSOT, embedded via go:embed
 PLAN.md                  # design spec (zh-TW, user-facing)
 ```
@@ -69,7 +69,7 @@ PLAN.md                  # design spec (zh-TW, user-facing)
 
 - **CI** (`.github/workflows/ci.yml`): gofmt check, `go vet`, build, test, goreleaser config validation, skills drift guard.
 - **Release** (`.github/workflows/release.yml`): driven by the committed `VERSION` file — pushing a `VERSION` change to `main` gates on whether tag `v<VERSION>` exists, then creates the tag, runs goreleaser (darwin/linux × amd64/arm64 tar.gz + SHA256 checksums + build provenance attestation), and publishes the npm wrapper `@howar31/dscrd` (skipped for prerelease versions containing `-`). The tag is an artifact of the release, not its trigger. Requires the `NPM_TOKEN` repository secret.
-- **Install paths**: npm wrapper (postinstall downloads the platform binary from GitHub Releases and verifies its checksum), `go install github.com/howar31/dscrd/cmd/dscrd@latest`, or a release binary.
+- **Install paths**: npm wrapper (postinstall downloads the platform binary from GitHub Releases and verifies its checksum), Homebrew cask `howar31/tap/dscrd` (goreleaser pushes it to `howar31/homebrew-tap` `Casks/`, skipped for prereleases; the binaries are unsigned, so a macOS `postflight` step strips `com.apple.quarantine`), `go install github.com/howar31/dscrd/cmd/dscrd@latest`, or a release binary.
 
 ## Known Limitations / Non-goals
 
