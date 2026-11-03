@@ -68,7 +68,7 @@ PLAN.md                  # design spec (zh-TW, user-facing)
 ## Deploy
 
 - **CI** (`.github/workflows/ci.yml`): gofmt check, `go vet`, build, test, goreleaser config validation, skills drift guard.
-- **Release** (`.github/workflows/release.yml`): driven by the committed `VERSION` file — pushing a `VERSION` change to `main` gates on whether tag `v<VERSION>` exists, then creates the tag, runs goreleaser (darwin/linux × amd64/arm64 tar.gz + SHA256 checksums + build provenance attestation), and publishes the npm wrapper `@howar31/dscrd` (skipped for prerelease versions containing `-`). The tag is an artifact of the release, not its trigger. Requires the `NPM_TOKEN` repository secret.
+- **Release** (`.github/workflows/release.yml`): driven by the committed `VERSION` file — pushing a `VERSION` change to `main` gates on whether tag `v<VERSION>` exists, then creates the tag, runs goreleaser (darwin/linux × amd64/arm64 tar.gz + SHA256 checksums + build provenance attestation), and publishes the npm wrapper `@howar31/dscrd` (skipped for prerelease versions containing `-`). The tag is an artifact of the release, not its trigger. npm publishing authenticates through npm trusted publishing (GitHub Actions OIDC, workflow `release.yml`); no npm token secret is used.
 - **Install paths**: npm wrapper (postinstall downloads the platform binary from GitHub Releases and verifies its checksum), `go install github.com/howar31/dscrd/cmd/dscrd@latest`, or a release binary.
 
 ## Known Limitations / Non-goals
